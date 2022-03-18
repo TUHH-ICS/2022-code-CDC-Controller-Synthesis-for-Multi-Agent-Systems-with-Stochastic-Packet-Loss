@@ -1,3 +1,12 @@
+%---------------------------------------------------------------------------------------------------
+% For Paper
+% "Stochastic Packet Loss in Multi-Agent Systems: An Empirical and Theoretical Analysis"
+% by C. Hespe, A. Datar, D. Schneider, H. Saadabadi, H. Werner and H. Frey
+% Copyright (c) Institute of Control Systems, Hamburg University of Technology. All rights reserved.
+% Licensed under the GPLv3. See LICENSE in the project root for license information.
+% Author(s): Christian Hespe
+%---------------------------------------------------------------------------------------------------
+
 function str = format_duration(duration)
 %FORMAT_DURATION Summary of this function goes here
 %   Detailed explanation goes here
