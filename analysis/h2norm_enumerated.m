@@ -8,8 +8,29 @@
 %---------------------------------------------------------------------------------------------------
 
 function [H2, Q, solver_stats] = h2norm_enumerated(sysD, sysC, sysP, Kd, Kc, L0, p, symmetric)
-%H2NORM_ENUMERATED Summary of this function goes here
-%   Detailed explanation goes here
+%H2NORM_ENUMERATED Calculates the H2-norm of the given decomposable jump
+%system with Bernoulli packet loss.
+%   This function calculates the H2-norm of the given decomposable jump
+%   system by application of Theorem 1 from the accompanying paper. To do
+%   so, it needs to enumerate all possible modes, the number of which grows
+%   exponentially with the number of agents in the system.
+%   In contrast to the other performance functions, we must distinguish
+%   between symmetric and asymmetric packet loss, because this will change
+%   the performance measure in this case.
+%
+%   Arguments:
+%       sysD      -> Decoupled part of the plant
+%       sysC      -> Coupled part of the plant
+%       sysP      -> Deterministic interconnected part of the plant
+%       Kd        -> Decoupled part of the controller
+%       Kc        -> Coupled part of the controller
+%       L0        -> Laplacian describing the nominal graph of the system
+%       p         -> Probability of a successful package transmission
+%       symmetric -> [Optional] Handle symmetric or asymmetric loss
+%   Returns:
+%       H2           -> H2-norm of the system
+%       Q            -> Storage function matrix of the solution
+%       solver_stats -> Timing information about the algorithm
 
 % Setup the SDP solver
 % The offset is used to convert strict LMI into nonstrict ones by pushing
@@ -28,8 +49,8 @@ solver_stats.yalmip = NaN;
 H2    = inf;
 timer = tic;
 
-% Set default
-if nargin <= 6
+% Set defaults
+if nargin <= 7
     symmetric = false;
 end
 
@@ -61,7 +82,7 @@ end
 channels = find(A0);
 m = length(channels);
 
-%% Solve the SDP from Theorem 2
+%% Solve the SDP from Theorem 1
 % To generate the required SDP, we need to enumerate all modes of the jump
 % system. This is done by splitting the communication into channels and
 % disableing them individually.

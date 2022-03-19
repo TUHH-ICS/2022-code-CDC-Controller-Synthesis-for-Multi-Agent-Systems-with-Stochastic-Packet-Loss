@@ -125,6 +125,7 @@ for j = 1:2
     writetable(tbl, name)
 end
 
+% Add formating to the figure
 hold off
 xlim([0,1])
 ylim padded

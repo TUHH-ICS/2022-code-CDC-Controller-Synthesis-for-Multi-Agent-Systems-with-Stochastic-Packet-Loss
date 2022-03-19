@@ -8,27 +8,28 @@
 %---------------------------------------------------------------------------------------------------
 
 classdef DisturbedAgent < LinearFrictionMass
-    %DISTURBEDAGENT Examplary agent implementation with simple LTI
-    %dynamics that performs a formation control manoeuvre.
+    %DISTURBEDAGENT Simple LTI agent that can optionally be disturbed by a
+    %discrete impulse. The agent tries to maintain a formation using a
+    %distributed controller.
     
     properties(GetAccess = public, SetAccess = private)
         disturbance % Disturbance signal of the agents
     end
     
     properties(GetAccess = public, SetAccess = immutable)
-        ref
-        neighbours
+        ref         % Constant formation reference
+        neighbours  % Set of neighbours
     end
     
     properties(GetAccess = private, SetAccess = immutable)
-        controller
+        controller  % Dynamic formation controller
     end
     
     methods
         function obj = DisturbedAgent(id, initialPos, ref, neighbours, disturbed)
             %DISTURBEDAGENT Construct an instance of this class
             %   Sets up the correct agent dynamics and initializes the
-            %   agent and consensus protocol to the given initial position.
+            %   agent to the given initial position.
             
             data = load('controller');
             
@@ -64,8 +65,9 @@ classdef DisturbedAgent < LinearFrictionMass
             end
             
             if ~isempty(messages)               
-                % Calculate new formation reference. We use the standard
-                % Laplacian, therefore we sum up the data
+                % Calculate formation error and distributed controller 
+                % state. We use the standard Laplacian, therefore we sum
+                % up the data.
                 data = [messages.data];
                 err  = sum(obj.position - [data.position] - obj.ref, 2);
                 ctr  = sum(obj.controller.x - [data.ctr_state], 2);

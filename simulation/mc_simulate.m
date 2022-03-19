@@ -8,12 +8,27 @@
 %---------------------------------------------------------------------------------------------------
 
 function [h2, converged] = mc_simulate(graph, simconf, netconf)
-%MC_SIMULATE Summary of this function goes here
-%   Detailed explanation goes here
+%MC_SIMULATE Perform a Monte-Carlo simulation of the H2-norm of the
+%network of connected masses
+%   This function repeatedly runs simulations of networks of masses trying
+%   to maintain a formation under disturbances. By varying the properties
+%   of the network, this can be exploited to test controllers under varying
+%   circumstances.
+%
+%   Arguments:
+%       graph   -> Nominal communication graph
+%       simconf -> Configuration for the simulation
+%       netconf -> Might be struct array, configuration for network. Either
+%                  SinrConfiguration or plain struct for Bernoulli
+%   Returns:
+%       h2        -> Mean H2-norm of the system for each type of network
+%       converged -> True, if all simulations converged
 
+% Extract problem data
 N   = height(graph.Nodes);
 dim = size(simconf.positions, 1);
 
+% Calculate all required graph matrices
 L0   = full(laplace_matrix(graph));
 A0   = full(adjacency(graph));
 Ld   = kron(L0, eye(dim));
@@ -39,7 +54,7 @@ parfor i = 1:numel(M)
     Agents = cell(N, 1);
     for j = 1:length(Agents)
         pos    = simconf.positions(:,j);
-        nghbrs = find(A0(j,:));
+        nghbrs = find(A0(j,:)); % All nonzero entries numbered
         dist   = (mod(M(i)-1, dim)+1) * (mod(M(i)-1, N) == j-1);
         Agents{j} = DisturbedAgent(Network.getId(), pos, pos, nghbrs, dist);
     end

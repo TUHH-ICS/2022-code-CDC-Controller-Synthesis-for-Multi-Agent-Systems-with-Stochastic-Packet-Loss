@@ -12,11 +12,12 @@ function [H2, Q, solver_stats] = h2norm_decomposed(sysD, sysC, sysP, L0, p, robu
 %decomposable jump system in a scalable manner
 %
 %   Arguments:
-%       sysD -> Decoupled part of the system
-%       sysC -> Stochastically coupled part of the system
-%       sysP -> Deterministically coupled part of the system
-%       L0   -> Laplacian describing the nominal graph of the system
-%       p    -> Probability of a successful package transmission
+%       sysD   -> Decoupled part of the system
+%       sysC   -> Stochastically coupled part of the system
+%       sysP   -> Deterministically coupled part of the system
+%       L0     -> Laplacian describing the nominal graph of the system
+%       p      -> Probability of a successful package transmission
+%       robust -> [optional] Use single Z matrix for robust analyis. Default: false
 %   Returns:
 %       H2           -> Upper bound on the H2-norm of the system
 %       Q            -> Storage function matrix of the solution
@@ -55,7 +56,7 @@ N  = size(L0,1);
 
 lambda = eig(L0);
 
-%% Solve the SDP from Theorem 7
+%% Solve the SDP from Theorem 2
 Q    = sdpvar(nx, nx);
 cost = 0;
 Constraints = Q >= offset * eye(nx);

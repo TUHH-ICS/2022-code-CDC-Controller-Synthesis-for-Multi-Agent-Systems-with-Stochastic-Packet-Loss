@@ -8,8 +8,12 @@
 %---------------------------------------------------------------------------------------------------
 
 function G = assemble_mas(sysD, sysC, sysP, ny, nu, L, L0)
-%ASSEMBLE_MAS Summary of this function goes here
-%   Detailed explanation goes here
+%ASSEMBLE_MAS Takes the decomposed parts of a MAS and assembles the full
+%system from them.
+%   Certain analysis operations cannot be performed in the decomposed form
+%   but require the full system to be present. This function thus assembles
+%   the full MAS from the decomposed parts.
+
 hat = @(K, M, N) kron(eye(size(L)), K) + kron(L, M) + kron(L0, N);
 
 [Ad, Bd, Cd, Dd] = ssdata(sysD);

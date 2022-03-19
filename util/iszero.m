@@ -8,8 +8,10 @@
 %---------------------------------------------------------------------------------------------------
 
 function ret = iszero(A, tol)
-%ISZERO Summary of this function goes here
-%   Detailed explanation goes here
+%ISZERO Checks whether a matrix is completely zero
+%   Direct comparison with 0 will lead to spurios false negatives, since
+%   floating point arithmetic is not exact. For that reason this function
+%   has a tolerance build in, until which point an entry counts as zero.
 
 if nargin <= 1
     tol = 1e-8;

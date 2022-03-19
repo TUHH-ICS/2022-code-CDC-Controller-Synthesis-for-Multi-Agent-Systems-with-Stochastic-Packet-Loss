@@ -4,16 +4,48 @@
 % by C. Hespe, A. Datar, D. Schneider, H. Saadabadi, H. Werner and H. Frey
 % Copyright (c) Institute of Control Systems, Hamburg University of Technology. All rights reserved.
 % Licensed under the GPLv3. See LICENSE in the project root for license information.
+%
+% Contains an self-implemented version of the approach described in
+% P. Massioni and M. Verhaegen, “Distributed control for identical dynamically coupled systems:
+% A decomposition approach,” IEEE Transactions on Automatic Control, 2009
+%
 % Author(s): Christian Hespe
 %---------------------------------------------------------------------------------------------------
 
 function [Fd, Fc, H2, P, solver_stats] = h2syn_nominal_dual(sysD, sysC, ny, nu, L0, backoff)
-%H2SYN_NOMINAL Summary of this function goes here
-%   Detailed explanation goes here
+%H2SYN_NOMINAL_DUAL Function to synthesize a dynamic output-feedback
+%controller for a decomposable LTI system that is suboptimal with respect
+%to the H2-norm of the closed loop.
+%   This function implements the decomposable output-feedback controller
+%   synthesis that was proposed by Massioni and Verhaegen in 2009. In
+%   addition, a backoff scheme proposed in
+%
+%   C. W. Scherer and S. Weiland, “Linear matrix inequalities in control,”
+%
+%   is implemented to improve the numerical conditioning of the resulting
+%   controller at the cost at slightly worse performance bounds.
+%
+%   Arguments:
+%       sysD    -> Decoupled part of the plant
+%       sysC    -> Coupled part of the plant
+%       ny      -> Number of measured outputs
+%       nu      -> Number of control inputs
+%       L0      -> Laplacian of the nominal graph
+%       backoff -> [optional] Percentage of backoff. Default: 0.05
+%   Returns:
+%       Fd           -> Decoupled part of the controller
+%       Fc           -> Coupled part of the controller
+%       H2           -> Upper bound on the H2-norm of the closed-loop
+%       P            -> Gramian matrix of the solution
+%       solver_stats -> Timing information about the algorithm
 
+% Setup the SDP solver
+% The offset is used to convert strict LMI into nonstrict ones by pushing
+% the solution away from the boundary.
 offset = 1e-8;
 opts   = sdpsettings('verbose', 0);
 
+% Allocate storage for time measurements
 solver_stats        = struct;
 solver_stats.prep   = NaN;
 solver_stats.solver = NaN;
@@ -21,19 +53,21 @@ solver_stats.trans  = NaN;
 solver_stats.total  = NaN;
 solver_stats.yalmip = NaN;
 
+% Initialize return values with reasonable defaults
 Fd    = [];
 Fc    = [];
 H2    = Inf;
 P     = [];
 timer = tic;
 
+% Set default value for backoff
 if nargin <= 5
     backoff = 0.05;
 elseif backoff < 0
     error('Backoff must be non-negative!')
 end
 
-%%
+%% Prepare the system description
 [Ac, Bc, Cc, Dc] = ssdata(sysC);
 [Ad, Bd, Cd, Dd] = ssdata(sysD);
 
@@ -72,7 +106,12 @@ end
 
 lambda = eig(L0);
 
-%%
+%% Solve the SDP from Theorem 15, Massioni and Verhaegen, 2009
+% The LMIs utilized in this function are dualized compared to the original
+% ones from the paper. Instead of the controllability Gramien, the
+% observability Gramian is used. This is done for the purpose of better
+% comparability with the other results from the current paper.
+
 alpha = sdpvar(1);
 beta  = sdpvar(1);
 Q     = sdpvar(nx, nx, nL-1, 'symmetric');
@@ -92,6 +131,9 @@ Nd    = sdpvar(nu, ny, 'full');
 Nc    = sdpvar(nu, ny, 'full');
 cost  = 0;
 
+% Check the additional constraints that need to be placed on the
+% controller. These are taken from Table 1 in the above paper, which
+% however contains an error of one missing but required constraint.
 if ~P_in && ~P_out
     Constraints = [];
 elseif ~P_in
@@ -103,6 +145,9 @@ end
 % Abbreviation of a common term
 Phi = alpha*eye(nx);
 
+% The eigenvalues of L0 are sorted by Matlab. By iteration only over 2:N,
+% we ignore lambda_1 = 0 and thus the uncontrollable and marginally stable
+% modal subsystem.
 for i = 2:nL
     li  = lambda(i);
     Qi  = Q(:,:,i-1);
@@ -110,6 +155,7 @@ for i = 2:nL
     Wi  = W(:,:,i-1);
     Ji  = J(:,:,i-1);
     
+    % Construct system and controller matrices for this modal subsystem
     A   = Ad    + li*Ac;
     Bu  = Bd_u  + li*Bc_u;
     Bw  = Bd_w  + li*Bc_w;
@@ -123,6 +169,7 @@ for i = 2:nL
     M   = Md    + li*Mc;
     N   = Nd    + li*Nc;
     
+    % Main LMIs
     LMI = [ Qi          Ji           Y'*A'+M'*Bu'   K'             Y'*Cz'+M'*Dzu'  ;
             Ji'         Hi           A'+Cy'*N'*Bu'  A'*X'+Cy'*L'   Cz'+Cy'*N'*Dzu' ;
             A*Y+Bu*M    A+Bu*N*Cy    Y+Y'-Qi        eye(nx)+S'-Ji  zeros(nx,nz)    ;
@@ -140,6 +187,10 @@ for i = 2:nL
     EIG   = [ Y+Y'-Qi             beta*eye(nx)+S'-Ji ;
               beta*eye(nx)+S-Ji'  X+X'-Hi            ];
 
+    % For certain LMIs that are obviously infeasible, Yalmip will refuse to
+    % construct the SDP and issue an error. This try catch will convert
+    % that error into a warning so that we can successfully finish running
+    % the remainder of the script.
     try
         Constraints = [ Constraints                                ,...
                         Qi  <= alpha  * eye(nx)                    ,...
@@ -163,6 +214,10 @@ Constraints = [ Constraints                               ,...
                 [ Phi, Y; Y', Phi ] >= offset * eye(2*nx) ];
 
 %% Implement three stage procedure to improve numerical conditioning
+% This section implements the three stage procedure proposed by Scherer and
+% Weiland in their lecture notes to improve the numerical conditioning of
+% the controller.
+
 solver_stats.prep = toc(timer);
 sol = optimize(Constraints, cost, opts);
 
@@ -201,10 +256,12 @@ else
     solver_stats.solver = solver_stats.solver + sol.solvertime;
     trans = tic;
     
+    % Calculate U & V from the identity UV' + XY = S
     [U, Sigma, V] = svd(value(S - X*Y));
     U = U*sqrtm(Sigma);
     V = V*sqrtm(Sigma);
     
+    % Recover the Gramian from the new set of variables
     H2  = sqrt(value(cost));
     P   = zeros(2*nx,2*nx,nL-1);
     Psi = value([ Y   eye(nx)   ;
@@ -215,12 +272,16 @@ else
         P(:,:,i) = Psi' \ P(:,:,i) / Psi;
     end
     
+    % Recover the decoupled part of the controller
     Dd_K = value(Nd);
     Cd_K = value(Md - Nd*Cd_y*Y)/V';
     Bd_K = U\value(Ld - X*Bd_u*Nd);
     Ad_K = U\value(Kd - X*(Ad+Bd_u*Nd*Cd_y)*Y)/V' - Bd_K*value(Cd_y*Y)/V' - U\value(X*Bd_u)*Cd_K;
     Fd = ss(Ad_K, Bd_K, Cd_K, Dd_K);
     
+    % Recover the coupled part of the controller. This block is only true
+    % under the assumption that the closed-loop system is affine in the
+    % Laplacian.
     Dc_K = value(Nc);
     Cc_K = value(Mc - (Nc*Cd_y+Nd*Cc_y)*Y)/V';
     Bc_K = U\value(Lc - X*(Bc_u*Nd+Bd_u*Nc));

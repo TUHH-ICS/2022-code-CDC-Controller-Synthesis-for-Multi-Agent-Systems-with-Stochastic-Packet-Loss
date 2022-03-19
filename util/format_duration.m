@@ -8,9 +8,12 @@
 %---------------------------------------------------------------------------------------------------
 
 function str = format_duration(duration)
-%FORMAT_DURATION Summary of this function goes here
-%   Detailed explanation goes here
+%FORMAT_DURATION Format a duration given in seconds into a more easily
+%human readible string
+%   For long times measured with tic/toc, the output becomes very hard to
+%   read. This function improves the formating drastically.
 
+% Split duration into larger quantities
 days     = floor(duration / (60*60*24));
 duration = mod(duration, 60*60*24);
 hours    = floor(duration / (60*60));
@@ -20,6 +23,7 @@ duration = mod(duration, 60);
 seconds  = floor(duration);
 duration = duration - seconds;
 
+% Only print large quantities if they are nonzero
 if days > 0
     str = sprintf('%dd ', days);
 else

@@ -8,7 +8,10 @@
 %---------------------------------------------------------------------------------------------------
 
 function sys = addparts(sysD, sysC, lambda)
-[Ad, Bd, Cd, Dd] = ssdata(sysD);
+%ADDPARTS Function that linearly combines the matrices of the two systems
+%   The system sysC is scaled by lambda before being added onto sysD
+
+[Ad, Bd, Cd, Dd, Ts] = ssdata(sysD);
 [Ac, Bc, Cc, Dc] = ssdata(sysC);
-sys = ss(Ad+lambda*Ac, Bd+lambda*Bc, Cd+lambda*Cc, Dd+lambda*Dc, 1);     
+sys = ss(Ad+lambda*Ac, Bd+lambda*Bc, Cd+lambda*Cc, Dd+lambda*Dc, Ts);     
 end

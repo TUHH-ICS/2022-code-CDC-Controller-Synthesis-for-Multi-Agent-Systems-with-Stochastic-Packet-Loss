@@ -8,8 +8,8 @@
 %---------------------------------------------------------------------------------------------------
 
 function [sysD, sysC, sysP, nay, nau] = prepare_generalized_plant(G, R)
-%PREPARE_GENERALIZED_PLANT Summary of this function goes here
-%   Detailed explanation goes here
+%PREPARE_GENERALIZED_PLANT Assemble the generalized plant to fit the one
+%described in the accompanying paper.
 
 % The feedthrough term is assumed to be 0
 [A, B, C, ~] = ssdata(ss(G));

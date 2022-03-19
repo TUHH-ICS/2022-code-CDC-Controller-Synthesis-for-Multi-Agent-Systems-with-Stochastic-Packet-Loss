@@ -8,8 +8,11 @@
 %---------------------------------------------------------------------------------------------------
 
 function [CL_d, CL_c, CL_p] = assemble_cl(sysD, sysC, sysP, Kd, Kc)
-%ASSEMBLE_CL Summary of this function goes here
-%   Detailed explanation goes here
+%ASSEMBLE_CL Combine the plant and controller into the closed-loop system
+%   Because we treat decomposable system in decomposed form, assembling the
+%   closed-loop cannot be done using feedback() or lft(). This function
+%   assembles the closed loop under the assumption that it is affine in the
+%   Laplacian and will fail otherwise
 
 [Ad, Bd, Cd, Dd] = ssdata(sysD);
 [Ac, Bc, Cc, Dc] = ssdata(sysC);
