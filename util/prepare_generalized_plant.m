@@ -1,6 +1,6 @@
 %---------------------------------------------------------------------------------------------------
 % For Paper
-% "Stochastic Packet Loss in Multi-Agent Systems: An Empirical and Theoretical Analysis"
+% "Distributed H2 Controller Synthesis for Multi-Agent Systems with Stochastic Packet Loss"
 % by C. Hespe, A. Datar, D. Schneider, H. Saadabadi, H. Werner and H. Frey
 % Copyright (c) Institute of Control Systems, Hamburg University of Technology. All rights reserved.
 % Licensed under the GPLv3. See LICENSE in the project root for license information.
