@@ -20,10 +20,13 @@ addpath(genpath('mas-simulation/lib'))
 p_swp = [linspace(0.1, 1, 37), NaN]';
 
 % Simulation parameters
-simconf = struct;
-simconf.Tf      = 1e5;  % Maximum simulation time [s]
-simconf.tol     = 1e-5; % Tolerance before stopping the simulation
-simconf.samples = 10;
+simconf_sinr = struct;
+simconf_sinr.Tf      = 1e5;  % Maximum simulation time [s]
+simconf_sinr.tol     = 1e-5; % Tolerance before stopping the simulation
+simconf_sinr.samples = 10;
+simconf_bern = simconf_sinr;
+simconf_bern.tol     = 1e-4;
+simconf_bern.samples = 100;
 
 %% Problem definition
 m   = 1;  % Model mass [kg]
@@ -60,11 +63,14 @@ bernconf.sym   = true;
 
 %% Prepare for synthesis and analysis steps
 N = height(graph.Nodes);
-simconf.R          = R;   % Penalty on control signal
-simconf.dT         = dT;  % Sampling time during simulation
-simconf.positions  = [1:N; zeros(dim-1,N)]; % Initial positions of the agents
-sinrconf.cycleTime  = dT;  % Time per communication cycle
-sinrconf.agentCount = N;
+simconf_sinr.R         = R;   % Penalty on control signal
+simconf_bern.R         = R;   % Penalty on control signal
+simconf_sinr.dT        = dT;  % Sampling time during simulation
+simconf_bern.dT        = dT;  % Sampling time during simulation
+simconf_sinr.positions = [1:N; zeros(dim-1,N)]; % Initial positions of the agents
+simconf_bern.positions = [1:N; zeros(dim-1,N)]; % Initial positions of the agents
+sinrconf.cycleTime     = dT;  % Time per communication cycle
+sinrconf.agentCount    = N;
 
 % Assemble the generalized plant
 [sysD, sysC, sysP, ny, nu] = prepare_generalized_plant(G, R);
@@ -104,9 +110,9 @@ for i = 1:length(p_swp)
     
     %% Monte-Carlo validation        
     tic
-    [H2_sinr(i), sinr_conv(i)] = mc_simulate(graph, simconf, sinrconf);
-    [H2_bern(i), bern_conv(i)] = mc_simulate(graph, simconf, bernconf);
-    disp(['Monte-Carlo simulations completed in ' format_duration(toc)])
+    [H2_sinr(i), sinr_conv(i)] = mc_simulate(graph, simconf_sinr, sinrconf);
+    [H2_bern(i), bern_conv(i)] = mc_simulate(graph, simconf_bern, bernconf);
+    disp(['Monte-Carlo simulations completed in ' format_duration(toc) ' on ' char(datetime())])
 end
 
 %% Visualize result
