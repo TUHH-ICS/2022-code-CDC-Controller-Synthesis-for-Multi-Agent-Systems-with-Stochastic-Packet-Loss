@@ -1,10 +1,10 @@
-# Distributed $H_2$ Controller Synthesis for Multi-Agent Systems with Stochastic Packet Loss
+# Distributed H2 Controller Synthesis for Multi-Agent Systems with Stochastic Packet Loss
 
 ## General
 
 This repository contains an implementation of the algorithms and simulations described in the paper
 
-> C. Hespe, A. Datar, D. Schneider, H. Saadabadi, H. Werner and H. Frey, "Distributed $H_2$ Controller Synthesis for Multi-Agent Systems with Stochastic Packet Loss", submitted to L-CSS, 2022.
+> C. Hespe, A. Datar, D. Schneider, H. Saadabadi, H. Werner and H. Frey, "Distributed H2 Controller Synthesis for Multi-Agent Systems with Stochastic Packet Loss", submitted to L-CSS, 2022.
 
 It may be used to recreate and validate the figures from the paper.
 To do so, run either of the two main entry points in the repository, the scripts `validate_bernoulli.m`, and `evaluate_sinr.m`.
