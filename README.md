@@ -1,5 +1,7 @@
 # Distributed H2 Controller Synthesis for Multi-Agent Systems with Stochastic Packet Loss
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.6372421.svg)](https://doi.org/10.5281/zenodo.6372421)
+
 ## General
 
 This repository contains an implementation of the algorithms and simulations described in the paper
